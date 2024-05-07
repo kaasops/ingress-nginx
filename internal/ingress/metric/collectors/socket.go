@@ -324,9 +324,17 @@ func (sc *SocketCollector) handleMessage(msg []byte) {
 
 	for i := range statsBatch {
 		stats := &statsBatch[i]
-		if sc.metricsPerHost && !sc.hosts.Has(stats.Host) {
-			klog.V(3).InfoS("Skipping metric for host not being served", "host", stats.Host)
-			continue
+		if sc.metricsPerHost {
+			if !sc.hosts.Has(stats.Host) {
+				klog.V(3).InfoS("Skipping metric for host not being served", "host", stats.Host)
+				continue
+			}
+			if stats.Host != "" {
+				if stats.Namespace == "" || stats.Ingress == "" {
+					klog.V(3).InfoS("Skipping metric for host without namespace or ingress", "host", stats.Host)
+					continue
+				}
+			}
 		}
 
 		if sc.reportStatusClasses && stats.Status != "" {
